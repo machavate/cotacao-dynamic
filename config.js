@@ -1,6 +1,4 @@
-// 1) Vá à Supabase > Project Settings > API e copie os dois valores abaixo.
-// 2) Cole-os aqui, entre aspas, sem apagar as aspas.
-const SUPABASE_URL = "sb_secret_M0TMFqJyVx8ldw-oqNpUKQ_zuREYp2o";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh5eHB3bXBteXJ6dGhtYWJwZnhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3MTExMDMsImV4cCI6MjEwNjI4NzEwM30.ysHGvh2T19oC36LvL6tnZf5maJCYYliy7Kr1srCjmpU";
+const SUPABASE_URL = "sb_publishable_wFyzrwl11rRaI_DkTJhVKg_NWPRtJLU";
+const SUPABASE_ANON_KEY ="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh5eHB3bXBteXJ6dGhtYWJwZnhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3MTExMDMsImV4cCI6MjEwNjI4NzEwM30.ysHGvh2T19oC36LvL6tnZf5maJCYYliy7Kr1srCjmpU";
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
