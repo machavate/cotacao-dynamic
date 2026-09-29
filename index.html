@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entrar | Painel Dynamic Services</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+<div class="login-wrap">
+<div class="login-card">
+<h1>DYNAMIC <span style="color:var(--red)">SERVICES</span></h1>
+<p>Painel de cotações — acesso restrito</p>
+<label>Email</label><input id="email" type="email" autocomplete="username">
+<label>Senha</label><input id="pass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
+<div class="err" id="err"></div>
+<button class="btn bk" style="width:100%;margin-top:8px" onclick="login()">Entrar</button>
+</div>
+</div>
+<script src="config.js"></script>
+<script>
+(async function(){var s=(await supabaseClient.auth.getSession()).data.session;if(s)location.href='app.html'})();
+async function login(){
+var email=document.getElementById('email').value.trim(),pass=document.getElementById('pass').value;
+var err=document.getElementById('err');err.textContent='';
+if(!email||!pass){err.textContent='Preencha email e senha.';return}
+var r=await supabaseClient.auth.signInWithPassword({email:email,password:pass});
+if(r.error){err.textContent='Email ou senha incorrectos.';return}
+location.href='app.html';
+}
+</script>
+</body>
+</html>

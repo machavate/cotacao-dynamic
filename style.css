@@ -1,0 +1,48 @@
+:root{--red:#d6001c;--red2:#a80016;--grey:#f3f3f3;--line:#dcdcdc;--mut:#595959}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;font:15px/1.5 Barlow,Arial,sans-serif;background:#fff;color:#161616}
+h1,h2,h3{font-family:'Barlow Condensed',sans-serif;margin:0}
+a{color:inherit}
+.btn{border:2px solid var(--red);background:var(--red);color:#fff;padding:9px 16px;font:600 14px Barlow;cursor:pointer}
+.btn:hover{background:var(--red2);border-color:var(--red2)}
+.btn.ol{background:#fff;color:#000;border-color:#000}.btn.ol:hover{background:#000;color:#fff}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn.bk{background:#000;border-color:#000}.btn.bk:hover{background:var(--red);border-color:var(--red)}
+.btn.danger{background:#8a0000;border-color:#8a0000}
+header{background:#000;color:#fff;border-bottom:4px solid var(--red);display:flex;align-items:center;justify-content:space-between;padding:12px 20px;position:sticky;top:0;z-index:20;flex-wrap:wrap;gap:10px}
+header b{font:800 22px 'Barlow Condensed';letter-spacing:.4px}header b span{color:var(--red)}
+nav{display:flex;gap:6px;flex-wrap:wrap}
+nav button{background:none;border:2px solid #444;color:#ddd;padding:8px 16px;font:600 14px Barlow;cursor:pointer}
+nav button.on{background:var(--red);border-color:var(--red);color:#fff}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 18px 60px}
+.card{background:#fff;border:1px solid var(--line);padding:20px;margin-bottom:18px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:#000;margin-bottom:24px}
+.stats div{background:#fff;padding:18px}.stats div:nth-child(2n){background:var(--grey)}
+.stats b{display:block;font:800 30px 'Barlow Condensed';color:var(--red)}
+.stats span{font-size:13px;color:var(--mut)}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);font-size:14px}
+th{color:var(--mut);text-transform:uppercase;font-size:12px;border-bottom:2px solid #000}
+.tag{padding:2px 8px;font-size:12px;font-weight:600;color:#fff}
+.tag.rascunho{background:#8a8a8a}.tag.enviada{background:#000}.tag.aprovada{background:var(--red)}.tag.paga{background:#1e8a3c}
+.row-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.bal.neg{color:var(--red);font-weight:700}.bal.ok{color:#1e8a3c;font-weight:700}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-start;justify-content:center;overflow:auto;z-index:50;padding:30px 14px}
+.overlay.open{display:flex}
+.modal{background:#fff;width:100%;max-width:560px;border-top:6px solid var(--red);padding:22px}
+.modal h2{font-size:26px;text-transform:uppercase;margin-bottom:14px}
+label{display:block;font-weight:600;font-size:13px;margin:10px 0 4px}
+input,select,textarea{width:100%;padding:9px 10px;border:2px solid var(--line);font:inherit}
+input:focus,select:focus,textarea:focus{border-color:var(--red);outline:0}
+.items div.it{display:grid;grid-template-columns:1fr 55px 90px 30px;gap:6px;margin-top:6px;align-items:center}
+.tot{text-align:right;font:800 24px 'Barlow Condensed';margin-top:10px}
+.mact{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.x{background:none;border:0;color:var(--red);font-size:20px;cursor:pointer;line-height:1}
+.empty{color:var(--mut);padding:20px 0;text-align:center}
+.muted{color:var(--mut);font-size:13px}
+.err{color:var(--red);font-size:14px;margin-top:8px;min-height:18px}
+.login-wrap{min-height:100vh;display:grid;place-items:center;background:#000;padding:20px}
+.login-card{background:#fff;width:100%;max-width:380px;padding:30px;border-top:6px solid var(--red)}
+.login-card h1{font-size:28px;text-transform:uppercase;margin-bottom:4px}
+.login-card p{color:var(--mut);margin:0 0 18px;font-size:14px}
+@media(max-width:720px){.stats{grid-template-columns:1fr 1fr}table,thead,tbody,tr,td,th{display:block}thead{display:none}tr{border-bottom:2px solid #000;padding:8px 0}td{border:0;padding:3px 0}td::before{content:attr(data-l);color:var(--mut);font-size:11px;display:block}}

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel de Cotações | Dynamic Services</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+<header><b>DYNAMIC <span>COTAÇÕES</span></b>
+<nav id="nav">
+<button data-t="dash" class="on">Painel</button>
+<button data-t="clientes">Clientes</button>
+<button data-t="cotacoes">Cotações</button>
+</nav>
+<button class="btn ol sm" onclick="logout()">Sair</button>
+</header>
+<div class="wrap">
+<div id="msg" class="muted" style="margin-bottom:14px"></div>
+
+<section id="dash">
+<div class="stats">
+<div><b id="k-clientes">0</b><span>Clientes</span></div>
+<div><b id="k-cotacoes">0</b><span>Cotações</span></div>
+<div><b id="k-receber">0</b><span>MT por receber</span></div>
+<div><b id="k-recebido">0</b><span>MT recebido</span></div>
+</div>
+<div class="card"><div class="row-h"><h2 style="font-size:22px">Cotações recentes</h2><button class="btn" onclick="openQuote()">+ Nova cotação</button></div><div id="dash-list"></div></div>
+</section>
+
+<section id="clientes" style="display:none">
+<div class="row-h"><h2 style="font-size:24px;text-transform:uppercase">Clientes</h2><button class="btn" onclick="openClient()">+ Novo cliente</button></div>
+<div class="card"><table><thead><tr><th>Nome</th><th>Telefone</th><th>Cotações</th><th>Saldo devedor</th><th></th></tr></thead><tbody id="cli-list"></tbody></table><div id="cli-empty" class="empty" style="display:none">Ainda não tem clientes registados.</div></div>
+</section>
+
+<section id="cotacoes" style="display:none">
+<div class="row-h"><h2 style="font-size:24px;text-transform:uppercase">Cotações</h2><button class="btn" onclick="openQuote()">+ Nova cotação</button></div>
+<div class="card"><table><thead><tr><th>Cliente</th><th>Data</th><th>Total</th><th>Pago</th><th>Estado</th><th></th></tr></thead><tbody id="q-list"></tbody></table><div id="q-empty" class="empty" style="display:none">Ainda não tem cotações.</div></div>
+</section>
+</div>
+
+<div class="overlay" id="ov-cli"><div class="modal">
+<h2 id="cli-tt">Novo cliente</h2>
+<input type="hidden" id="c-id">
+<label>Nome</label><input id="c-nome">
+<label>Telefone (com código do país, ex: 258...)</label><input id="c-tel">
+<label>Email (opcional)</label><input id="c-email">
+<label>Notas (opcional)</label><textarea id="c-notas" rows="2"></textarea>
+<div class="mact"><button class="btn ol" onclick="closeM('ov-cli')">Cancelar</button><button class="btn bk" onclick="saveClient()">Guardar</button></div>
+</div></div>
+
+<div class="overlay" id="ov-q"><div class="modal" style="max-width:640px">
+<h2 id="q-tt">Nova cotação</h2>
+<input type="hidden" id="q-id">
+<label>Cliente</label><select id="q-cli"></select>
+<label>Itens</label>
+<div id="q-items" class="items"></div>
+<button class="btn ol sm" style="margin-top:8px" onclick="addItem()">+ Item</button>
+<div class="tot">Total: <span id="q-total">0</span> MT</div>
+<label>Valor já pago (MT)</label><input id="q-pago" type="number" min="0" value="0">
+<label>Estado</label><select id="q-estado"><option value="rascunho">Rascunho</option><option value="enviada">Enviada ao cliente</option><option value="aprovada">Aprovada</option><option value="paga">Paga</option></select>
+<div class="mact"><button class="btn ol" onclick="closeM('ov-q')">Cancelar</button><button class="btn bk" onclick="saveQuote()">Guardar</button></div>
+</div></div>
+
+<script src="config.js"></script>
+<script>
+var clients=[],quotes=[];
+function fmt(n){return (Math.round(n*100)/100).toLocaleString('pt-PT')}
+function setMsg(t){document.getElementById('msg').textContent=t||''}
+
+async function requireLogin(){
+var s=(await supabaseClient.auth.getSession()).data.session;
+if(!s){location.href='index.html';return false}
+return true}
+function logout(){supabaseClient.auth.signOut().then(function(){location.href='index.html'})}
+
+async function loadAll(){
+setMsg('A carregar...');
+var rc=await supabaseClient.from('clients').select('*').order('name');
+var rq=await supabaseClient.from('quotes').select('*').order('created_at',{ascending:false});
+if(rc.error||rq.error){setMsg('Erro ao carregar dados. Verifique a ligação à Supabase em config.js.');return}
+clients=rc.data||[];quotes=rq.data||[];setMsg('');renderAll()}
+
+(async function init(){if(await requireLogin())loadAll()})();
+
+document.getElementById('nav').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+document.querySelectorAll('#nav button').forEach(function(x){x.classList.remove('on')});b.classList.add('on');
+['dash','clientes','cotacoes'].forEach(function(s){document.getElementById(s).style.display=(s===b.dataset.t)?'':'none'})});
+
+function clientName(id){var c=clients.filter(function(x){return x.id===id})[0];return c?c.name:'—'}
+function clientPhone(id){var c=clients.filter(function(x){return x.id===id})[0];return c?c.phone:''}
+function qTotal(q){return (q.items||[]).reduce(function(s,i){return s+(Number(i.qty)||0)*(Number(i.price)||0)},0)}
+function clientDebt(id){return quotes.filter(function(q){return q.client_id===id&&q.status!=='rascunho'}).reduce(function(s,q){return s+Math.max(qTotal(q)-(Number(q.paid)||0),0)},0)}
+
+function renderAll(){
+document.getElementById('k-clientes').textContent=clients.length;
+document.getElementById('k-cotacoes').textContent=quotes.length;
+var receber=quotes.filter(function(q){return q.status!=='rascunho'}).reduce(function(s,q){return s+Math.max(qTotal(q)-(Number(q.paid)||0),0)},0);
+var recebido=quotes.reduce(function(s,q){return s+(Number(q.paid)||0)},0);
+document.getElementById('k-receber').textContent=fmt(receber);
+document.getElementById('k-recebido').textContent=fmt(recebido);
+
+var cb=document.getElementById('cli-list');cb.innerHTML='';
+document.getElementById('cli-empty').style.display=clients.length?'none':'';
+clients.forEach(function(c){var n=quotes.filter(function(q){return q.client_id===c.id}).length,d=clientDebt(c.id);
+cb.insertAdjacentHTML('beforeend','<tr><td data-l="Nome"><b>'+c.name+'</b></td><td data-l="Telefone">'+(c.phone||'—')+'</td><td data-l="Cotações">'+n+'</td><td data-l="Saldo" class="bal '+(d>0?'neg':'ok')+'">'+(d>0?fmt(d)+' MT':'Em dia')+'</td><td><button class="btn ol sm" onclick="openClient(\''+c.id+'\')">Editar</button> <button class="btn sm danger" onclick="delClient(\''+c.id+'\')">Apagar</button></td></tr>')});
+
+var qb=document.getElementById('q-list'),dl=document.getElementById('dash-list');qb.innerHTML='';dl.innerHTML='';
+document.getElementById('q-empty').style.display=quotes.length?'none':'';
+if(!quotes.length)dl.innerHTML='<p class="empty">Ainda não tem cotações.</p>';
+quotes.forEach(function(q,idx){var t=qTotal(q),row='<tr><td data-l="Cliente"><b>'+clientName(q.client_id)+'</b></td><td data-l="Data">'+(q.date||'—')+'</td><td data-l="Total">'+fmt(t)+' MT</td><td data-l="Pago">'+fmt(q.paid||0)+' MT</td><td data-l="Estado"><span class="tag '+q.status+'">'+q.status+'</span></td><td><button class="btn ol sm" onclick="openQuote(\''+q.id+'\')">Ver/editar</button> <button class="btn sm" onclick="sendWA(\''+q.id+'\')">WhatsApp</button></td></tr>';
+qb.insertAdjacentHTML('beforeend',row);if(idx<5)dl.insertAdjacentHTML('beforeend',row)})}
+
+function closeM(id){document.getElementById(id).classList.remove('open')}
+function openClient(id){var c=id?clients.filter(function(x){return x.id===id})[0]:null;
+document.getElementById('cli-tt').textContent=c?'Editar cliente':'Novo cliente';
+document.getElementById('c-id').value=id||'';
+document.getElementById('c-nome').value=c?c.name:'';
+document.getElementById('c-tel').value=c?(c.phone||''):'';
+document.getElementById('c-email').value=c?(c.email||''):'';
+document.getElementById('c-notas').value=c?(c.notas||''):'';
+document.getElementById('ov-cli').classList.add('open')}
+async function saveClient(){var id=document.getElementById('c-id').value,name=document.getElementById('c-nome').value.trim();
+if(!name){alert('Indique o nome do cliente.');return}
+var data={name:name,phone:document.getElementById('c-tel').value.trim(),email:document.getElementById('c-email').value.trim(),notas:document.getElementById('c-notas').value.trim()};
+var r=id?await supabaseClient.from('clients').update(data).eq('id',id):await supabaseClient.from('clients').insert([data]);
+if(r.error){alert('Não foi possível guardar: '+r.error.message);return}
+closeM('ov-cli');loadAll()}
+async function delClient(id){if(!confirm('Apagar este cliente? As cotações associadas não serão apagadas.'))return;
+var r=await supabaseClient.from('clients').delete().eq('id',id);if(r.error){alert('Não foi possível apagar.');return}loadAll()}
+
+function addItem(desc,qty,price){var d=document.createElement('div');d.className='it';
+d.innerHTML='<input placeholder="Descrição" class="it-d" value="'+(desc||'').replace(/"/g,'&quot;')+'" oninput="calcTotal()"><input type="number" min="0" class="it-q" placeholder="Qtd" value="'+(qty||1)+'" oninput="calcTotal()"><input type="number" min="0" class="it-p" placeholder="Preço MT" value="'+(price||0)+'" oninput="calcTotal()"><button class="x" onclick="this.parentElement.remove();calcTotal()">×</button>';
+document.getElementById('q-items').appendChild(d)}
+function calcTotal(){var t=0;document.querySelectorAll('#q-items .it').forEach(function(r){t+=(Number(r.querySelector('.it-q').value)||0)*(Number(r.querySelector('.it-p').value)||0)});document.getElementById('q-total').textContent=fmt(t);return t}
+
+function openQuote(id){var q=id?quotes.filter(function(x){return x.id===id})[0]:null;
+var sel=document.getElementById('q-cli');sel.innerHTML=clients.map(function(c){return '<option value="'+c.id+'">'+c.name+'</option>'}).join('')||'<option value="">— Registe um cliente primeiro —</option>';
+document.getElementById('q-tt').textContent=q?'Editar cotação':'Nova cotação';
+document.getElementById('q-id').value=id||'';
+if(q)sel.value=q.client_id;
+document.getElementById('q-items').innerHTML='';
+if(q&&q.items&&q.items.length)q.items.forEach(function(i){addItem(i.desc,i.qty,i.price)});else addItem();
+document.getElementById('q-pago').value=q?(q.paid||0):0;
+document.getElementById('q-estado').value=q?q.status:'rascunho';
+calcTotal();
+document.getElementById('ov-q').classList.add('open')}
+async function saveQuote(){var cid=document.getElementById('q-cli').value;if(!cid){alert('Registe e escolha um cliente.');return}
+var items=[];document.querySelectorAll('#q-items .it').forEach(function(r){var d=r.querySelector('.it-d').value.trim();if(d)items.push({desc:d,qty:Number(r.querySelector('.it-q').value)||0,price:Number(r.querySelector('.it-p').value)||0})});
+if(!items.length){alert('Adicione pelo menos um item.');return}
+var id=document.getElementById('q-id').value,data={client_id:cid,items:items,paid:Number(document.getElementById('q-pago').value)||0,status:document.getElementById('q-estado').value,date:new Date().toLocaleDateString('pt-PT')};
+var r=id?await supabaseClient.from('quotes').update(data).eq('id',id):await supabaseClient.from('quotes').insert([data]);
+if(r.error){alert('Não foi possível guardar a cotação: '+r.error.message);return}
+closeM('ov-q');loadAll()}
+
+function sendWA(id){var q=quotes.filter(function(x){return x.id===id})[0];if(!q)return;var phone=(clientPhone(q.client_id)||'').replace(/\D/g,'');
+var t=qTotal(q),linhas=q.items.map(function(i){return '- '+i.desc+' (x'+i.qty+'): '+fmt(i.qty*i.price)+' MT'}).join('\n');
+var msg='Olá '+clientName(q.client_id)+', segue a cotação da Dynamic Services:\n\n'+linhas+'\n\nTotal: '+fmt(t)+' MT'+(q.paid?('\nJá pago: '+fmt(q.paid)+' MT\nSaldo: '+fmt(t-q.paid)+' MT'):'')+'\n\nQualquer dúvida estamos à disposição.';
+if(!phone){alert('Este cliente não tem telefone registado. Edite o cliente para adicionar.');return}
+window.open('https://wa.me/'+phone+'?text='+encodeURIComponent(msg),'_blank')}
+</script>
+</body>
+</html>
